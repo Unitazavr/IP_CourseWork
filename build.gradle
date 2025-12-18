@@ -1,0 +1,64 @@
+plugins {
+    id "java"
+    id "org.springframework.boot" version "3.5.5"
+    id "io.spring.dependency-management" version "1.1.7"
+}
+
+group = "ru.ulstu.is"
+version = "0.0.1-SNAPSHOT"
+description = "My demo server app"
+def jdkVersion = "21"
+
+defaultTasks "bootRun"
+
+jar {
+    enabled = false
+}
+
+bootJar {
+    archiveFileName = String.format("%s-%s.jar", rootProject.name, version)
+}
+
+assert System.properties["java.specification.version"] == jdkVersion
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(jdkVersion)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    springdocVersion = "2.8.11"
+    mockitoVersion = "5.19.0"
+}
+
+configurations {
+     mockitoAgent
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "com.h2database:h2:2.4.240"
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    mockitoAgent("org.mockito:mockito-core:${mockitoVersion}") {
+        transitive = false
+    }
+
+    implementation "org.springframework.boot:spring-boot-starter-security"
+}
+
+tasks.named("test") {
+    useJUnitPlatform()
+    jvmArgs += "-Xshare:off"
+    jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+}

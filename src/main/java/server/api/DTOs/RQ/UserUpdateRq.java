@@ -1,0 +1,12 @@
+package server.api.DTOs.RQ;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import server.validation.PasswordMatch;
+
+@PasswordMatch(first = "newPassword", second = "newPasswordConfirm")
+public record UserUpdateRq(
+        @NotBlank @Size(min = 3) String oldPassword,
+        @NotBlank @Size(min = 3) String newPassword,
+        @NotBlank @Size(min = 3) String newPasswordConfirm) {
+}
