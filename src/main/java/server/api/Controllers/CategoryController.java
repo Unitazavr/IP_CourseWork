@@ -7,10 +7,14 @@ import org.springframework.web.bind.annotation.*;
 import server.api.DTOs.RQ.CategoryRq;
 import server.api.DTOs.RS.CategoryRs;
 import server.infrustructure.Constants;
+import server.infrustructure.pagination.PageHelper;
 import server.infrustructure.pagination.PageRs;
 import server.service.CategoryService;
 
 import java.util.List;
+
+import static server.infrustructure.Constants.DEFAULT_PAGE;
+import static server.infrustructure.Constants.DEFAULT_SIZE;
 
 @RestController
 @RequestMapping(Constants.API_URL + "/categories")
@@ -28,9 +32,14 @@ public class CategoryController {
     }
 
     @GetMapping
-    public PageRs<CategoryRs> getAll(Pageable pageable) {
+    public PageRs<CategoryRs> getAll(@RequestParam(value = "page", defaultValue = "1") int page,
+                                     @RequestParam(value = "size", defaultValue = "20") int size) {
+        if (page < 1) page = DEFAULT_PAGE;
+        if (size < 1) size = DEFAULT_SIZE;
+        var pageable = PageHelper.toPageable(page, size);
         return categoryService.getAll(pageable);
     }
+
 
     @PutMapping("/{id}")
     public CategoryRs update(@Valid @RequestBody CategoryRq rq,

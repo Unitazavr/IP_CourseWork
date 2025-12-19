@@ -55,8 +55,8 @@ public class CommentService {
                 || principal.getAuthorities().contains(UserRole.ADMIN)) {
             comment.setContent(rq.getContent());
             return mapper.toRS(commentRepository.save(comment));
-        }
-        throw new AccessDeniedException("Not author");
+        } else throw new AccessDeniedException("Not author");
+
     }
 
     public void delete(Long id) {

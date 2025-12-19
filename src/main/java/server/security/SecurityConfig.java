@@ -20,11 +20,25 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(
             HttpSecurity httpSecurity,
             CorsConfigurationSource corsConfigurationSource) throws Exception {
-        httpSecurity.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
-        httpSecurity.csrf(AbstractHttpConfigurer::disable);
-        httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource));
+        httpSecurity
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .httpBasic(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> auth
+                        // Swagger UI
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
 
-        httpSecurity.authorizeHttpRequests(requests -> requests.anyRequest().permitAll());
+                        // Auth endpoints
+                        .requestMatchers("/api/1.0/users/register").permitAll()
+                        .requestMatchers("/login/**").permitAll()
+                        .requestMatchers("/logout/**").permitAll()
+
+                        // Все остальные запросы требуют аутентификации
+                        .anyRequest().authenticated()
+                );
 
         return httpSecurity.build();
     }

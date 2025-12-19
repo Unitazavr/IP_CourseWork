@@ -82,7 +82,6 @@ public class PostService {
         if (post.getAuthor().getId().equals(principal.getId())
                 || principal.getAuthorities().contains(UserRole.ADMIN)) {
             postRepository.delete(post);
-        }
-        throw new AccessDeniedException("Not author");
+        } else throw new AccessDeniedException("Not author");
     }
 }

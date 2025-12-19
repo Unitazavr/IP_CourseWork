@@ -1,5 +1,6 @@
 package server.service;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -7,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import server.api.DTOs.RQ.UserRq;
 import server.api.DTOs.RQ.UserUpdateRq;
 import server.api.DTOs.RS.UserRs;
@@ -75,7 +77,7 @@ public class UserService implements UserDetailsService {
     //Метод для обновления логина
     public UserRs update(Long id, UserRq rq) {
         UserEntity user = userRepository.findById(id).orElseThrow();
-        if (!Objects.equals(rq.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(rq.getPassword(), user.getPassword())) {
             throw new PasswordConfirmationException();
         }
         user.setLogin(rq.getLogin());
@@ -85,10 +87,10 @@ public class UserService implements UserDetailsService {
     //Метод для обновления пароля
     public UserRs update(Long id, UserUpdateRq rq) {
         UserEntity user = userRepository.findById(id).orElseThrow();
-        if (!Objects.equals(rq.oldPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(rq.oldPassword(), user.getPassword())) {
             throw new PasswordConfirmationException();
         }
-        user.setPassword(rq.newPassword());
+        user.setPassword(passwordEncoder.encode(rq.newPassword()));
         user = userRepository.save(user);
         return UserRs.from(user);
     }
@@ -100,6 +102,9 @@ public class UserService implements UserDetailsService {
     }
 
     public void subscribe(Long fromId, Long toId) {
+        if (Objects.equals(fromId, toId)) {
+            throw new RuntimeException("Bad request");
+        }
         UserEntity from = userRepository.findById(fromId).orElseThrow();
         UserEntity to = userRepository.findById(toId).orElseThrow();
 
