@@ -3,6 +3,7 @@ package server.api.Controllers;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import server.api.DTOs.RQ.CategoryRq;
 import server.api.DTOs.RS.CategoryRs;
@@ -26,6 +27,7 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public CategoryRs create(@Valid @RequestBody CategoryRq rq) {
         return categoryService.create(rq);
@@ -40,12 +42,13 @@ public class CategoryController {
         return categoryService.getAll(pageable);
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public CategoryRs update(@Valid @RequestBody CategoryRq rq,
                              @PathVariable Long id) {
         return categoryService.update(id, rq);
     }
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         categoryService.delete(id);

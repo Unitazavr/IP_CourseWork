@@ -3,6 +3,7 @@ package server.api.Controllers;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,8 +35,6 @@ public class UserController {
         return userService.getById(id);
     }
 
-    
-
     @GetMapping
     public PageRs<UserRs> getAll(@RequestParam(value = "page", defaultValue = "1") int page,
                                  @RequestParam(value = "size", defaultValue = "20") int size) {
@@ -51,11 +50,14 @@ public class UserController {
         return userService.register(rq);
     }
 
-    @PutMapping("/{id}")
-    public UserRs update(@Valid @RequestBody UserRq rq,
-                         @PathVariable Long id) {
-        return userService.update(id, rq);
-    }
+    //Тут требуется доработка RS модели, WIP.
+//    //Обновление логина. Функционал только для админов.
+//    @PreAuthorize("hasRole('ADMIN')")
+//    @PutMapping("/{id}")
+//    public UserRs update(@Valid @RequestBody UserRq rq,
+//                         @PathVariable Long id) {
+//        return userService.update(id, rq);
+//    }
     @PutMapping("/password")
     public UserRs updatePassword(@Valid @RequestBody UserUpdateRq rq,
                                  @AuthenticationPrincipal UserPrincipal user) {
@@ -65,6 +67,7 @@ public class UserController {
     }
 
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public UserRs delete(@PathVariable Long id) {
         return userService.delete(id);

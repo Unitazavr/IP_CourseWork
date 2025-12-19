@@ -1,0 +1,75 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 005-insert-users
+      author: you
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: login, value: admin }
+              - column: { name: password, value: $2a$10$9GG6w/ipdik2haocQKsgreysfOVmcuaQeaDhKLTWK8Sei4CHHRAHi }
+              - column: { name: role, value: ADMIN }
+
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: login, value: user }
+              - column: { name: password, value: $2a$10$9GG6w/ipdik2haocQKsgreysfOVmcuaQeaDhKLTWK8Sei4CHHRAHi }
+              - column: { name: role, value: USER }
+
+      rollback:
+        - delete:
+            tableName: users
+            where: id in (1, 2)
+
+  - changeSet:
+      id: 006-insert-categories
+      author: you
+      changes:
+        - insert:
+            tableName: categories
+            columns:
+              - column: { name: name, value: Java }
+
+        - insert:
+            tableName: categories
+            columns:
+              - column: { name: name, value: Spring }
+
+      rollback:
+        - delete:
+            tableName: categories
+            where: id in (1, 2)
+
+  - changeSet:
+      id: 007-insert-posts
+      author: you
+      changes:
+        - insert:
+            tableName: posts
+            columns:
+              - column: { name: author_id, valueNumeric: 1 }
+              - column: { name: category_id, valueNumeric: 2 }
+              - column: { name: title, value: "Welcome post" }
+              - column: { name: content, value: "Hello from admin" }
+
+      rollback:
+        - delete:
+            tableName: posts
+            where: id = 1
+
+  - changeSet:
+      id: 008-insert-subscriptions
+      author: you
+      changes:
+        - insert:
+            tableName: user_subscriptions
+            columns:
+              - column: { name: subscriber_id, valueNumeric: 2 }
+              - column: { name: author_id, valueNumeric: 1 }
+
+      rollback:
+        - delete:
+            tableName: user_subscriptions
+            where: subscriber_id = 2 AND author_id = 1

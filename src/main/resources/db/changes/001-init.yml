@@ -1,0 +1,148 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 001-create-users
+      author: you
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: login
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: users
+
+  - changeSet:
+      id: 002-create-categories
+      author: you
+      changes:
+        - createTable:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+      rollback:
+        - dropTable:
+            tableName: categories
+
+  - changeSet:
+      id: 003-create-posts
+      author: you
+      changes:
+        - createTable:
+            tableName: posts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: author_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category_id
+                  type: BIGINT
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: CLOB
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: posts
+            baseColumnNames: author_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_posts_author
+
+        - addForeignKeyConstraint:
+            baseTableName: posts
+            baseColumnNames: category_id
+            referencedTableName: categories
+            referencedColumnNames: id
+            constraintName: fk_posts_category
+
+      rollback:
+        - dropTable:
+            tableName: posts
+
+  - changeSet:
+      id: 004-create-user-subscriptions
+      author: you
+      changes:
+        - createTable:
+            tableName: user_subscriptions
+            columns:
+              - column:
+                  name: subscriber_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+        - addPrimaryKey:
+            tableName: user_subscriptions
+            columnNames: subscriber_id, author_id
+            constraintName: pk_user_subscriptions
+
+        - addForeignKeyConstraint:
+            baseTableName: user_subscriptions
+            baseColumnNames: subscriber_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_subscription_subscriber
+
+        - addForeignKeyConstraint:
+            baseTableName: user_subscriptions
+            baseColumnNames: author_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_subscription_author
+
+      rollback:
+        - dropTable:
+            tableName: user_subscriptions

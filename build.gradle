@@ -33,6 +33,7 @@ repositories {
 ext {
     springdocVersion = "2.8.11"
     mockitoVersion = "5.19.0"
+    liquibaseVersion = "4.33.0"
 }
 
 configurations {
@@ -55,6 +56,7 @@ dependencies {
     }
 
     implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation 'org.liquibase:liquibase-core'
 }
 
 tasks.named("test") {

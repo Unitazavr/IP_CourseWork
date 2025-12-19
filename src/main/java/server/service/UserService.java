@@ -113,6 +113,9 @@ public class UserService implements UserDetailsService {
     }
 
     public void unsubscribe(Long fromId, Long toId) {
+        if (Objects.equals(fromId, toId)) {
+            throw new RuntimeException("Bad request");
+        }
         UserEntity from = userRepository.findById(fromId).orElseThrow();
         UserEntity to = userRepository.findById(toId).orElseThrow();
 

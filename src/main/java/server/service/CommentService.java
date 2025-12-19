@@ -50,7 +50,6 @@ public class CommentService {
 
     public CommentRs update(UserPrincipal principal, Long id, CommentRq rq) {
         CommentEntity comment = commentRepository.findById(id).orElseThrow();
-
         if (comment.getUser().getId().equals(principal.getId())
                 || principal.getAuthorities().contains(UserRole.ADMIN)) {
             comment.setContent(rq.getContent());
@@ -59,7 +58,11 @@ public class CommentService {
 
     }
 
-    public void delete(Long id) {
-        commentRepository.deleteById(id);
+    public void delete(UserPrincipal principal, Long id) {
+        CommentEntity comment = commentRepository.findById(id).orElseThrow();
+        if (comment.getUser().getId().equals(principal.getId())
+                || principal.getAuthorities().contains(UserRole.ADMIN)) {
+            commentRepository.deleteById(id);
+        } else throw new AccessDeniedException("Not author");
     }
 }
