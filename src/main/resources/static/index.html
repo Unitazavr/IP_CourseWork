@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <p id="out">Push the button</p>
+        <input id="name" />
+        <br />
+        <button onclick="get()">Get</button>
+        <br />
+        <button onclick="getTest()">Get Test</button>
+    </body>
+    <script>
+        const url = "http://localhost:8080/api/1.0/example";
+        const out = document.getElementById("out");
+        const name = document.getElementById("name");
+        const get = async () => {
+            const res = await fetch(`${url}?name=${name.value}`);
+            const text = await res.text();
+            out.innerText = text;
+        };
+        const getTest = async () => {
+            const res = await fetch(`${url}/test`);
+            const text = await res.text();
+            out.innerText = text;
+        };
+    </script>
+</html>

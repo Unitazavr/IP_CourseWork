@@ -1,0 +1,69 @@
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+        "Droid Sans", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.card {
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.nav-link.btn {
+    border: none;
+    padding: 0.5rem 1rem;
+}
+
+.nav-link.btn:hover {
+    background-color: transparent;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* Modal backdrop fix */
+.modal.show {
+    display: block;
+}
+
+/* Improve list group appearance */
+.list-group-item {
+    transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Better spacing for cards */
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Pagination styling */
+.pagination {
+    margin-top: 2rem;
+}
+
+/* Better button spacing */
+.btn + .btn {
+    margin-left: 0.5rem;
+}
+
+/* Spinner centering */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}

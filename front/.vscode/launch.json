@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "type": "chrome",
+            "name": "Debug",
+            "request": "launch",
+            "url": "http://localhost:5173"
+        },
+        {
+            "type": "node",
+            "name": "Start",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "start"],
+            "console": "integratedTerminal"
+        }
+    ]
+}
