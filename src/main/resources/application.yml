@@ -27,3 +27,8 @@ server:
     servlet:
         session:
             tracking-modes: cookie
+logging:
+    level:
+        org.springframework.web: DEBUG
+        org.springframework.web.servlet.DispatcherServlet: DEBUG
+        org.springframework.security: DEBUG

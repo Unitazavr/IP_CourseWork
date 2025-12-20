@@ -24,37 +24,52 @@ public class SecurityConfig {
             CorsConfigurationSource corsConfigurationSource) throws Exception {
 
         httpSecurity
-                .headers(headers ->
-                        headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                )
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                .httpBasic(Customizer.withDefaults())
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
-                .authorizeHttpRequests(auth -> auth
+            // Кастомная форма логина
+            .formLogin(form -> form
+                    .loginProcessingUrl("/login")     // куда шлёт frontend
+                    .usernameParameter("login")       // имя поля
+                    .passwordParameter("password")    // имя поля
+                    .successHandler((req, res, auth) -> res.setStatus(200))
+                    .failureHandler((req, res, ex) -> res.sendError(401))
+                    .permitAll()
+            )
 
-                        // H2 console — только ADMIN
-                        .requestMatchers("/h2-console/**").hasRole("ADMIN")
+            // Logout
+            .logout(logout -> logout
+                    .logoutUrl("/logout")
+                    .logoutSuccessHandler((req, res, auth) -> res.setStatus(200))
+            )
 
-                        // Swagger
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+            .authorizeHttpRequests(auth -> auth
 
-                        // Только анонимные
-                        .requestMatchers(
-                                "/api/1.0/users/register",
-                                "/login/**"
-                        ).anonymous()
+                    // H2 console — только ADMIN
+                    .requestMatchers("/h2-console/**").hasRole("ADMIN")
 
-                        // Logout — только аутентифицированные
-                        .requestMatchers("/logout/**").authenticated()
+                    // Swagger
+                    .requestMatchers(
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/swagger-ui.html"
+                    ).permitAll()
 
-                        // Всё остальное
-                        .anyRequest().authenticated()
-                );
+                    // Только анонимные
+                    .requestMatchers(
+                            "/api/1.0/users/register",
+                            "/login/**"
+                    ).anonymous()
+
+                    // Logout — только аутентифицированные
+                    .requestMatchers("/logout/**").authenticated()
+
+                    // Всё остальное
+                    .anyRequest().authenticated()
+
+            )
+            .headers(headers -> headers
+                    .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 
         return httpSecurity.build();
     }
