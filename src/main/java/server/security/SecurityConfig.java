@@ -1,5 +1,6 @@
 package server.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,7 +31,7 @@ public class SecurityConfig {
             // Кастомная форма логина
             .formLogin(form -> form
                     .loginProcessingUrl("/login")     // куда шлёт frontend
-                    .usernameParameter("login")       // имя поля
+                    .usernameParameter("username")       // имя поля
                     .passwordParameter("password")    // имя поля
                     .successHandler((req, res, auth) -> res.setStatus(200))
                     .failureHandler((req, res, ex) -> res.sendError(401))
@@ -67,6 +68,12 @@ public class SecurityConfig {
                     // Всё остальное
                     .anyRequest().authenticated()
 
+            )
+
+            .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint(
+                            (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
+                    )
             )
             .headers(headers -> headers
                     .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));

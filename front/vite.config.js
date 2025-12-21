@@ -18,11 +18,6 @@ export default defineConfig({
                 changeOrigin: true,
                 credentials: "include",
             },
-            "/login": {
-                target: "http://localhost:8080",
-                changeOrigin: true,
-                credentials: "include",
-            },
             "/logout": {
                 target: "http://localhost:8080",
                 changeOrigin: true,

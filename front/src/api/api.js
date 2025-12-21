@@ -1,4 +1,5 @@
 const API_BASE = "/api/1.0";
+const LOGIN_API = "http://localhost:8080/login";
 
 // Helper function for API requests
 async function apiRequest(url, options = {}) {
@@ -24,8 +25,8 @@ export async function login(username, password) {
     const formData = new URLSearchParams();
     formData.append("username", username);
     formData.append("password", password);
-
-    const response = await fetch("/login", {
+    console.log("ОТПРАВЛЯЕМ ДАННЫЕ ДЛЯ ВХОДА: login:" + username + " ПАРОЛЬ: " + password);
+    const response = await fetch(LOGIN_API, {
         method: "POST",
         credentials: "include",
         headers: {
