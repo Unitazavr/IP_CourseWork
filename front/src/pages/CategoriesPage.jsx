@@ -3,6 +3,10 @@ import { createCategory, deleteCategory, getCategories, updateCategory } from '.
 
 function CategoriesPage() {
   const [categories, setCategories] = useState([]);
+  const [pagination, setPagination] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(3);
+  const [goToPage, setGoToPage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -11,14 +15,20 @@ function CategoriesPage() {
 
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const loadCategories = async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await getCategories(1, 3);
+      const data = await getCategories(currentPage, pageSize);
       setCategories(data.items || []);
+      setPagination({
+        totalPages: data.totalPages,
+        currentPage: data.currentPage,
+        isFirst: data.isFirst,
+        isLast: data.isLast,
+      });
     } catch (err) {
       setError('Ошибка загрузки категорий');
     } finally {
@@ -40,7 +50,6 @@ function CategoriesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, { name: categoryName });
@@ -58,12 +67,25 @@ function CategoriesPage() {
     if (!window.confirm('Удалить категорию? Все посты в этой категории останутся без категории.')) {
       return;
     }
-
     try {
       await deleteCategory(id);
       loadCategories();
     } catch (err) {
       alert('Ошибка удаления категории');
+    }
+  };
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const handleGoToPage = (e) => {
+    e.preventDefault();
+    const pageNum = parseInt(goToPage);
+    if (pageNum >= 1 && pageNum <= pagination.totalPages) {
+      setCurrentPage(pageNum);
+      setGoToPage('');
     }
   };
 
@@ -103,14 +125,14 @@ function CategoriesPage() {
                         {cat.name}
                       </h5>
                       <div className="d-flex gap-2 mt-3">
-                        <button 
-                          onClick={() => handleOpenModal(cat)} 
+                        <button
+                          onClick={() => handleOpenModal(cat)}
                           className="btn btn-sm btn-warning flex-grow-1"
                         >
                           <i className="bi bi-pencil"></i>
                         </button>
-                        <button 
-                          onClick={() => handleDelete(cat.id)} 
+                        <button
+                          onClick={() => handleDelete(cat.id)}
                           className="btn btn-sm btn-danger flex-grow-1"
                         >
                           <i className="bi bi-trash"></i>
@@ -122,6 +144,75 @@ function CategoriesPage() {
               ))}
             </div>
           )}
+
+          {/* Улучшенная пагинация - теперь всегда видна */}
+          <nav className="mt-4">
+            <div className="row align-items-center mb-3">
+              <div className="col-md-4">
+                <div className="d-flex align-items-center">
+                  <label className="me-2 text-nowrap">Элементов на странице:</label>
+                  <select 
+                    className="form-select form-select-sm" 
+                    value={pageSize}
+                    onChange={handlePageSizeChange}
+                  >
+                    <option value="3">3</option>
+                    <option value="6">6</option>
+                    <option value="9">9</option>
+                    <option value="12">12</option>
+                  </select>
+                </div>
+              </div>
+              <div className="col-md-4">
+                <form onSubmit={handleGoToPage} className="d-flex align-items-center">
+                  <label className="me-2 text-nowrap">Перейти на:</label>
+                  <input
+                    type="number"
+                    className="form-control form-control-sm me-2"
+                    value={goToPage}
+                    onChange={(e) => setGoToPage(e.target.value)}
+                    placeholder="№"
+                    min="1"
+                    max={pagination.totalPages || 1}
+                    style={{ width: '70px' }}
+                  />
+                  <button 
+                    type="submit" 
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={!goToPage}
+                  >
+                    Перейти
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <ul className="pagination justify-content-center">
+              <li className={`page-item ${pagination.isFirst ? 'disabled' : ''}`}>
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={pagination.isFirst}
+                >
+                  Предыдущая
+                </button>
+              </li>
+              <li className="page-item active">
+                <span className="page-link">
+                  {pagination.currentPage || 1} / {pagination.totalPages || 1}
+                </span>
+              </li>
+              <li className={`page-item ${pagination.isLast ? 'disabled' : ''}`}>
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={pagination.isLast}
+                >
+                  Следующая
+                </button>
+              </li>
+            </ul>
+          </nav>
         </>
       )}
 
@@ -133,11 +224,7 @@ function CategoriesPage() {
                 <h5 className="modal-title">
                   {editingCategory ? 'Редактировать категорию' : 'Создать категорию'}
                 </h5>
-                <button 
-                  type="button" 
-                  className="btn-close" 
-                  onClick={handleCloseModal}
-                ></button>
+                <button type="button" className="btn-close" onClick={handleCloseModal}></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
@@ -155,11 +242,7 @@ function CategoriesPage() {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    onClick={handleCloseModal}
-                  >
+                  <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
                     Отмена
                   </button>
                   <button type="submit" className="btn btn-primary">

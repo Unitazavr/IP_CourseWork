@@ -6,18 +6,20 @@ function UsersPage({ user }) {
   const [users, setUsers] = useState([]);
   const [pagination, setPagination] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(3);
+  const [goToPage, setGoToPage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadUsers();
-  }, [currentPage]);
+  }, [currentPage, pageSize]);
 
   const loadUsers = async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await getUsers(currentPage, 3);
+      const data = await getUsers(currentPage, pageSize);
       setUsers(data.items || []);
       setPagination({
         totalPages: data.totalPages,
@@ -29,6 +31,20 @@ function UsersPage({ user }) {
       setError('Ошибка загрузки пользователей');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
+
+  const handleGoToPage = (e) => {
+    e.preventDefault();
+    const pageNum = parseInt(goToPage);
+    if (pageNum >= 1 && pageNum <= pagination.totalPages) {
+      setCurrentPage(pageNum);
+      setGoToPage('');
     }
   };
 
@@ -73,8 +89,8 @@ function UsersPage({ user }) {
                       </div>
                     </div>
                     <div className="card-footer bg-transparent">
-                      <Link 
-                        to={`/users/${u.id}`} 
+                      <Link
+                        to={`/users/${u.id}`}
                         className="btn btn-sm btn-outline-primary w-100"
                       >
                         Профиль
@@ -86,35 +102,74 @@ function UsersPage({ user }) {
             </div>
           )}
 
-          {pagination.totalPages > 1 && (
-            <nav>
-              <ul className="pagination justify-content-center">
-                <li className={`page-item ${pagination.isFirst ? 'disabled' : ''}`}>
-                  <button 
-                    className="page-link" 
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                    disabled={pagination.isFirst}
+          {/* Улучшенная пагинация - теперь всегда видна */}
+          <nav className="mt-4">
+            <div className="row align-items-center mb-3">
+              <div className="col-md-4">
+                <div className="d-flex align-items-center">
+                  <label className="me-2 text-nowrap">Элементов на странице:</label>
+                  <select 
+                    className="form-select form-select-sm" 
+                    value={pageSize}
+                    onChange={handlePageSizeChange}
                   >
-                    Предыдущая
-                  </button>
-                </li>
-                <li className="page-item active">
-                  <span className="page-link">
-                    {pagination.currentPage} / {pagination.totalPages}
-                  </span>
-                </li>
-                <li className={`page-item ${pagination.isLast ? 'disabled' : ''}`}>
+                    <option value="3">3</option>
+                    <option value="6">6</option>
+                    <option value="9">9</option>
+                    <option value="12">12</option>
+                  </select>
+                </div>
+              </div>
+              <div className="col-md-4">
+                <form onSubmit={handleGoToPage} className="d-flex align-items-center">
+                  <label className="me-2 text-nowrap">Перейти на:</label>
+                  <input
+                    type="number"
+                    className="form-control form-control-sm me-2"
+                    value={goToPage}
+                    onChange={(e) => setGoToPage(e.target.value)}
+                    placeholder="№"
+                    min="1"
+                    max={pagination.totalPages || 1}
+                    style={{ width: '70px' }}
+                  />
                   <button 
-                    className="page-link" 
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={pagination.isLast}
+                    type="submit" 
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={!goToPage}
                   >
-                    Следующая
+                    Перейти
                   </button>
-                </li>
-              </ul>
-            </nav>
-          )}
+                </form>
+              </div>
+            </div>
+
+            <ul className="pagination justify-content-center">
+              <li className={`page-item ${pagination.isFirst ? 'disabled' : ''}`}>
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={pagination.isFirst}
+                >
+                  Предыдущая
+                </button>
+              </li>
+              <li className="page-item active">
+                <span className="page-link">
+                  {pagination.currentPage || 1} / {pagination.totalPages || 1}
+                </span>
+              </li>
+              <li className={`page-item ${pagination.isLast ? 'disabled' : ''}`}>
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={pagination.isLast}
+                >
+                  Следующая
+                </button>
+              </li>
+            </ul>
+          </nav>
         </>
       )}
     </div>

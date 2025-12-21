@@ -7,16 +7,22 @@ function PostDetailPage({ user }) {
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
+  const [commentsPagination, setCommentsPagination] = useState({});
+  const [commentsPage, setCommentsPage] = useState(1);
   const [newComment, setNewComment] = useState('');
   const [editingComment, setEditingComment] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const [commentsLoading, setCommentsLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadPost();
-    loadComments();
   }, [id]);
+
+  useEffect(() => {
+    loadComments();
+  }, [id, commentsPage]);
 
   const loadPost = async () => {
     try {
@@ -30,11 +36,21 @@ function PostDetailPage({ user }) {
   };
 
   const loadComments = async () => {
+    setCommentsLoading(true);
     try {
-      const data = await getCommentsByPost(id, 1, 100);
+      const data = await getCommentsByPost(id, commentsPage, 5);
       setComments(data.items || []);
+      setCommentsPagination({
+        totalPages: data.totalPages,
+        currentPage: data.currentPage,
+        isFirst: data.isFirst,
+        isLast: data.isLast,
+        totalElements: data.totalElements || 0,
+      });
     } catch (err) {
       console.error('Error loading comments:', err);
+    } finally {
+      setCommentsLoading(false);
     }
   };
 
@@ -59,6 +75,7 @@ function PostDetailPage({ user }) {
         content: newComment,
       });
       setNewComment('');
+      setCommentsPage(1); // Возврат на первую страницу после добавления
       loadComments();
     } catch (err) {
       alert('Ошибка добавления комментария');
@@ -70,7 +87,12 @@ function PostDetailPage({ user }) {
 
     try {
       await deleteComment(commentId);
-      loadComments();
+      // Если удалили последний комментарий на странице и это не первая страница
+      if (comments.length === 1 && commentsPage > 1) {
+        setCommentsPage(commentsPage - 1);
+      } else {
+        loadComments();
+      }
     } catch (err) {
       alert('Ошибка удаления комментария');
     }
@@ -146,7 +168,7 @@ function PostDetailPage({ user }) {
       </div>
 
       <div className="mt-4">
-        <h3>Комментарии ({comments.length})</h3>
+        <h3>Комментарии ({commentsPagination.totalElements || 0})</h3>
 
         <form onSubmit={handleAddComment} className="mb-4">
           <div className="mb-3">
@@ -165,69 +187,108 @@ function PostDetailPage({ user }) {
           </button>
         </form>
 
-        <div className="list-group">
-          {comments.map(comment => (
-            <div key={comment.id} className="list-group-item">
-              <div className="d-flex justify-content-between align-items-start">
-                <div className="flex-grow-1">
-                  <div className="mb-2">
-                    <strong>
-                      <Link to={`/users/${comment.userId}`}>{comment.userLogin}</Link>
-                    </strong>
-                    <small className="text-muted ms-2">
-                      {new Date(comment.createdAt).toLocaleString('ru-RU')}
-                    </small>
-                  </div>
-                  
-                  {editingComment === comment.id ? (
-                    <div>
-                      <textarea
-                        className="form-control mb-2"
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        maxLength={2000}
-                      />
-                      <button 
-                        onClick={() => handleUpdateComment(comment.id)} 
-                        className="btn btn-sm btn-success me-2"
-                      >
-                        Сохранить
-                      </button>
-                      <button 
-                        onClick={() => setEditingComment(null)} 
-                        className="btn btn-sm btn-secondary"
-                      >
-                        Отмена
-                      </button>
-                    </div>
-                  ) : (
-                    <p style={{ whiteSpace: 'pre-wrap' }}>{comment.content}</p>
-                  )}
-                </div>
-
-                {user.id === comment.userId && editingComment !== comment.id && (
-                  <div>
-                    <button 
-                      onClick={() => handleEditComment(comment)} 
-                      className="btn btn-sm btn-outline-warning me-2"
-                    >
-                      <i className="bi bi-pencil"></i>
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteComment(comment.id)} 
-                      className="btn btn-sm btn-outline-danger"
-                    >
-                      <i className="bi bi-trash"></i>
-                    </button>
-                  </div>
-                )}
-              </div>
+        {commentsLoading ? (
+          <div className="text-center my-4">
+            <div className="spinner-border spinner-border-sm" role="status">
+              <span className="visually-hidden">Загрузка комментариев...</span>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <>
+            <div className="list-group">
+              {comments.map(comment => (
+                <div key={comment.id} className="list-group-item">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div className="flex-grow-1">
+                      <div className="mb-2">
+                        <strong>
+                          <Link to={`/users/${comment.userId}`}>{comment.userLogin}</Link>
+                        </strong>
+                        <small className="text-muted ms-2">
+                          {new Date(comment.createdAt).toLocaleString('ru-RU')}
+                        </small>
+                      </div>
+                      
+                      {editingComment === comment.id ? (
+                        <div>
+                          <textarea
+                            className="form-control mb-2"
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            maxLength={2000}
+                          />
+                          <button 
+                            onClick={() => handleUpdateComment(comment.id)} 
+                            className="btn btn-sm btn-success me-2"
+                          >
+                            Сохранить
+                          </button>
+                          <button 
+                            onClick={() => setEditingComment(null)} 
+                            className="btn btn-sm btn-secondary"
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      ) : (
+                        <p style={{ whiteSpace: 'pre-wrap' }}>{comment.content}</p>
+                      )}
+                    </div>
 
-        {comments.length === 0 && (
-          <div className="alert alert-info">Комментариев пока нет</div>
+                    {user.id === comment.userId && editingComment !== comment.id && (
+                      <div>
+                        <button 
+                          onClick={() => handleEditComment(comment)} 
+                          className="btn btn-sm btn-outline-warning me-2"
+                        >
+                          <i className="bi bi-pencil"></i>
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteComment(comment.id)} 
+                          className="btn btn-sm btn-outline-danger"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {comments.length === 0 && (
+              <div className="alert alert-info">Комментариев пока нет</div>
+            )}
+
+            {/* Пагинация комментариев */}
+            <nav className="mt-3">
+              <ul className="pagination justify-content-center">
+                <li className={`page-item ${commentsPagination.isFirst ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => setCommentsPage(commentsPage - 1)}
+                    disabled={commentsPagination.isFirst}
+                  >
+                    <i className="bi bi-chevron-left"></i> Назад
+                  </button>
+                </li>
+                <li className="page-item active">
+                  <span className="page-link">
+                    {commentsPagination.currentPage || 1} / {commentsPagination.totalPages || 1}
+                  </span>
+                </li>
+                <li className={`page-item ${commentsPagination.isLast ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => setCommentsPage(commentsPage + 1)}
+                    disabled={commentsPagination.isLast}
+                  >
+                    Вперед <i className="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </>
         )}
       </div>
 

@@ -136,7 +136,7 @@ export async function deletePost(id) {
 }
 
 // Comments
-export async function getCommentsByPost(postId, page = 1, size = 2) {
+export async function getCommentsByPost(postId, page = 1, size = 100) {
     return apiRequest(`${API_BASE}/comments/post/${postId}?page=${page}&size=${size}`);
 }
 
