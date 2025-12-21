@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getUsers } from '../api/api';
+import { getUsers, getUsersByFilter } from '../api/api';
 
 function UsersPage({ user }) {
   const [users, setUsers] = useState([]);
@@ -8,18 +8,32 @@ function UsersPage({ user }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(3);
   const [goToPage, setGoToPage] = useState('');
+  const [selectedRole, setSelectedRole] = useState('ALL');
+  const [minSubscribers, setMinSubscribers] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadUsers();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, selectedRole, minSubscribers]);
 
   const loadUsers = async () => {
     setLoading(true);
     setError('');
     try {
-      const data = await getUsers(currentPage, pageSize);
+      let data;
+      // Если активен хотя бы один фильтр - используем метод фильтрации
+      if (selectedRole !== 'ALL' || minSubscribers !== '') {
+        data = await getUsersByFilter(
+          currentPage, 
+          pageSize, 
+          selectedRole !== 'ALL' ? selectedRole : null,
+          minSubscribers !== '' ? parseInt(minSubscribers) : null
+        );
+      } else {
+        data = await getUsers(currentPage, pageSize);
+      }
+      
       setUsers(data.items || []);
       setPagination({
         totalPages: data.totalPages,
@@ -32,6 +46,26 @@ function UsersPage({ user }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRoleChange = (e) => {
+    setSelectedRole(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleMinSubscribersChange = (e) => {
+    const value = e.target.value;
+    // Разрешаем только числа или пустую строку
+    if (value === '' || /^\d+$/.test(value)) {
+      setMinSubscribers(value);
+      setCurrentPage(1);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSelectedRole('ALL');
+    setMinSubscribers('');
+    setCurrentPage(1);
   };
 
   const handlePageSizeChange = (e) => {
@@ -48,12 +82,83 @@ function UsersPage({ user }) {
     }
   };
 
+  const hasActiveFilters = selectedRole !== 'ALL' || minSubscribers !== '';
+
   return (
     <div className="container mt-4">
       <h1 className="mb-4">
         <i className="bi bi-people me-2"></i>
         Пользователи
       </h1>
+
+      <div className="card mb-4">
+        <div className="card-body">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="card-title mb-0">
+              <i className="bi bi-funnel me-2"></i>Фильтры
+            </h5>
+            {hasActiveFilters && (
+              <button 
+                className="btn btn-sm btn-outline-secondary"
+                onClick={handleClearFilters}
+              >
+                <i className="bi bi-x-circle me-1"></i>
+                Сбросить
+              </button>
+            )}
+          </div>
+
+          <div className="row">
+            <div className="col-md-6 mb-3">
+              <label htmlFor="roleFilter" className="form-label">Роль:</label>
+              <select
+                id="roleFilter"
+                className="form-select"
+                value={selectedRole}
+                onChange={handleRoleChange}
+              >
+                <option value="ALL">Все роли</option>
+                <option value="USER">USER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+
+            <div className="col-md-6 mb-3">
+              <label htmlFor="subscribersFilter" className="form-label">
+                Минимум подписчиков:
+              </label>
+              <input
+                type="number"
+                id="subscribersFilter"
+                className="form-control"
+                placeholder="Введите число"
+                value={minSubscribers}
+                onChange={handleMinSubscribersChange}
+                min="0"
+              />
+              <small className="text-muted">
+                Оставьте пустым для отключения фильтра
+              </small>
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <div className="mt-2">
+              <small className="text-muted">
+                Активные фильтры: 
+                {selectedRole !== 'ALL' && (
+                  <span className="badge bg-primary ms-2">{selectedRole}</span>
+                )}
+                {minSubscribers !== '' && (
+                  <span className="badge bg-info ms-2">
+                    Подписчиков ≥ {minSubscribers}
+                  </span>
+                )}
+              </small>
+            </div>
+          )}
+        </div>
+      </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
@@ -66,7 +171,11 @@ function UsersPage({ user }) {
       ) : (
         <>
           {users.length === 0 ? (
-            <div className="alert alert-info">Пользователей не найдено</div>
+            <div className="alert alert-info">
+              {hasActiveFilters 
+                ? 'Пользователи с такими параметрами не найдены' 
+                : 'Пользователей не найдено'}
+            </div>
           ) : (
             <div className="row">
               {users.map(u => (
@@ -102,7 +211,6 @@ function UsersPage({ user }) {
             </div>
           )}
 
-          {/* Улучшенная пагинация - теперь всегда видна */}
           <nav className="mt-4">
             <div className="row align-items-center mb-3">
               <div className="col-md-4">

@@ -72,10 +72,30 @@ public class PostService {
         return PageRs.from(page, mapper::toRS);
     }
 
-    public Page<PostRs> getByCategory(Long categoryId, Pageable pageable) {
-        return postRepository.findAllByCategoryId(categoryId, pageable)
-                .map(mapper::toRS);
+    public Page<PostRs> getByFilter(Long categoryId, Long userId, Pageable pageable) {
+        Page<PostEntity> page;
+
+        boolean hasCategory = categoryId != null;
+        boolean hasUser = userId != null;
+
+        if (hasCategory && hasUser) {
+            page = postRepository.findByCategoryAndFeedForUser(
+                    categoryId,
+                    userId,
+                    pageable
+            );
+        } else if (hasCategory) {
+            page = postRepository.findAllByCategoryId(categoryId, pageable);
+
+        } else if (hasUser) {
+            page = postRepository.findFeedForUser(userId, pageable);
+
+        } else {
+            page = postRepository.findAll(pageable);
+        }
+        return page.map(mapper::toRS);
     }
+
 
     public void delete(UserPrincipal principal, Long id) {
         PostEntity post = postRepository.findById(id).orElseThrow();

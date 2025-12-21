@@ -1,8 +1,6 @@
 package server.api.Controllers;
 
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,20 +42,23 @@ public class UserController {
         return userService.getAll(pageable);
     }
 
+    @GetMapping("/filter")
+    public PageRs<UserRs> getAllByFilter(@RequestParam(value = "page", defaultValue = "1") int page,
+                                         @RequestParam(value = "size", defaultValue = "20") int size,
+                                         @RequestParam(required = false) String role,
+                                         @RequestParam(required = false) Long amount) {
+        if (page < 1) page = DEFAULT_PAGE;
+        if (size < 1) size = DEFAULT_SIZE;
+        var pageable = PageHelper.toPageable(page, size);
+        return userService.getAllByFilter(role, amount, pageable);
+    }
+
     // Регистрация
     @PostMapping("/register")
     public UserRs register(@Valid @RequestBody UserRq rq) {
         return userService.register(rq);
     }
 
-    //Тут требуется доработка RS модели, WIP.
-//    //Обновление логина. Функционал только для админов.
-//    @PreAuthorize("hasRole('ADMIN')")
-//    @PutMapping("/{id}")
-//    public UserRs update(@Valid @RequestBody UserRq rq,
-//                         @PathVariable Long id) {
-//        return userService.update(id, rq);
-//    }
     @PutMapping("/password")
     public UserRs updatePassword(@Valid @RequestBody UserUpdateRq rq,
                                  @AuthenticationPrincipal UserPrincipal user) {

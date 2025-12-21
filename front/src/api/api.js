@@ -66,6 +66,17 @@ export async function getUsers(page = 1, size = 2) {
     return apiRequest(`${API_BASE}/users?page=${page}&size=${size}`);
 }
 
+export async function getUsersByFilter(page = 1, size = 3, role = null, minSubscribers = null) {
+    let url = `${API_BASE}/users/filter?page=${page}&size=${size}`;
+    if (role && role !== "ALL") {
+        url += `&role=${role.toUpperCase()}`;
+    }
+    if (minSubscribers !== null && minSubscribers !== "") {
+        url += `&amount=${minSubscribers}`;
+    }
+    return apiRequest(url);
+}
+
 export async function getUserById(id) {
     return apiRequest(`${API_BASE}/users/${id}`);
 }
@@ -110,6 +121,17 @@ export async function getPostById(id) {
 
 export async function getPostsByCategory(categoryId, page = 1, size = 2) {
     return apiRequest(`${API_BASE}/posts/category/${categoryId}?page=${page}&size=${size}`);
+}
+
+export async function getPostsByFilter(page = 1, size = 3, categoryId = null, subscriptionsOnly = false) {
+    let url = `${API_BASE}/posts/filter?page=${page}&size=${size}`;
+    if (categoryId) {
+        url += `&categoryId=${categoryId}`;
+    }
+    if (subscriptionsOnly) {
+        url += `&subscriptions=true`;
+    }
+    return apiRequest(url);
 }
 
 export async function createPost(postData) {

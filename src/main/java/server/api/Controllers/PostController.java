@@ -47,14 +47,24 @@ public class PostController {
         return postService.getAll(pageable);
     }
 
-    @GetMapping("/category/{categoryId}")
-    public Page<PostRs> getByCategory(@PathVariable Long categoryId,
-                                      @RequestParam(value = "page", defaultValue = "1") int page,
-                                      @RequestParam(value = "size", defaultValue = "20") int size) {
+    @GetMapping("/filter")
+    public Page<PostRs> getByFilter(@AuthenticationPrincipal UserPrincipal user,
+                                    @RequestParam(required = false) Long categoryId,
+                                    @RequestParam(required = false) Boolean subscriptions,
+                                    @RequestParam(value = "page", defaultValue = "1") int page,
+                                    @RequestParam(value = "size", defaultValue = "20") int size) {
         if (page < 1) page = DEFAULT_PAGE;
         if (size < 1) size = DEFAULT_SIZE;
         var pageable = PageHelper.toPageable(page, size);
-        return postService.getByCategory(categoryId, pageable);
+        if (subscriptions == null){
+            subscriptions=false;
+        }
+        if (subscriptions){
+            return postService.getByFilter(categoryId, user.getId(), pageable);
+        }
+        else{
+            return postService.getByFilter(categoryId, null, pageable);
+        }
     }
 
     @PutMapping("/{postId}")

@@ -1,6 +1,5 @@
 package server.service;
 
-import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import server.api.DTOs.RQ.UserRq;
 import server.api.DTOs.RQ.UserUpdateRq;
 import server.api.DTOs.RS.UserRs;
@@ -73,6 +71,40 @@ public class UserService implements UserDetailsService {
         Page<UserEntity> page = userRepository.findAll(pageable);
         return PageRs.from(page, UserRs::from);
     }
+
+    public PageRs<UserRs> getAllByFilter(String roleString, Long amount, Pageable pageable) {
+        Page<UserEntity> page;
+        boolean hasRole = roleString != null && !roleString.isBlank();
+        boolean hasAmount = amount != null;
+
+        if (hasRole && hasAmount) {
+            if (amount < 0) {
+                throw new IllegalArgumentException("Amount can't be less than 0");
+            }
+            UserRole role = UserRole.valueOf(roleString);
+            page = userRepository.findByRoleAndSubscribersMoreThan(
+                    role,
+                    amount,
+                    pageable
+            );
+        } else if (hasRole) {
+            UserRole role = UserRole.valueOf(roleString);
+            page = userRepository.findByRole(role, pageable);
+
+        } else if (hasAmount) {
+            if (amount < 0) {
+                throw new IllegalArgumentException("Amount can't be less than 0");
+            }
+            page = userRepository.findWithSubscribersMoreThan(amount, pageable);
+
+        } else {
+            page = userRepository.findAll(pageable);
+        }
+
+        return PageRs.from(page, UserRs::from);
+    }
+
+
 
     //Метод для обновления логина
     public UserRs update(Long id, UserRq rq) {

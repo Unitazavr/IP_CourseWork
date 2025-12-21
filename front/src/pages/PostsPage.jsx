@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCategories, getPosts, getPostsByCategory } from '../api/api';
+import { getCategories, getPosts, getPostsByFilter } from '../api/api';
 
 function PostsPage({ user }) {
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [subscriptionsOnly, setSubscriptionsOnly] = useState(false);
   const [pagination, setPagination] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(3);
@@ -19,7 +20,7 @@ function PostsPage({ user }) {
 
   useEffect(() => {
     loadPosts();
-  }, [currentPage, selectedCategory, pageSize]);
+  }, [currentPage, selectedCategory, subscriptionsOnly, pageSize]);
 
   const loadCategories = async () => {
     try {
@@ -35,8 +36,9 @@ function PostsPage({ user }) {
     setError('');
     try {
       let data;
-      if (selectedCategory) {
-        data = await getPostsByCategory(selectedCategory, currentPage, pageSize);
+      // Если активен хотя бы один фильтр - используем метод фильтрации
+      if (selectedCategory || subscriptionsOnly) {
+        data = await getPostsByFilter(currentPage, pageSize, selectedCategory, subscriptionsOnly);
         setPosts(data.content || []);
         setPagination({
           totalPages: data.totalPages,
@@ -66,6 +68,11 @@ function PostsPage({ user }) {
     setCurrentPage(1);
   };
 
+  const handleSubscriptionsToggle = () => {
+    setSubscriptionsOnly(!subscriptionsOnly);
+    setCurrentPage(1);
+  };
+
   const handlePageSizeChange = (e) => {
     setPageSize(parseInt(e.target.value));
     setCurrentPage(1);
@@ -90,19 +97,63 @@ function PostsPage({ user }) {
         </Link>
       </div>
 
-      <div className="mb-4">
-        <label htmlFor="categoryFilter" className="form-label">Фильтр по категории:</label>
-        <select
-          id="categoryFilter"
-          className="form-select"
-          value={selectedCategory || 'all'}
-          onChange={(e) => handleCategoryChange(e.target.value)}
-        >
-          <option value="all">Все категории</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
+      <div className="card mb-4">
+        <div className="card-body">
+          <h5 className="card-title mb-3">
+            <i className="bi bi-funnel me-2"></i>Фильтры
+          </h5>
+          
+          <div className="row">
+            <div className="col-md-8 mb-3">
+              <label htmlFor="categoryFilter" className="form-label">Категория:</label>
+              <select
+                id="categoryFilter"
+                className="form-select"
+                value={selectedCategory || 'all'}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+              >
+                <option value="all">Все категории</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-md-4 mb-3">
+              <label className="form-label d-block">&nbsp;</label>
+              <div className="form-check form-switch">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="subscriptionsFilter"
+                  checked={subscriptionsOnly}
+                  onChange={handleSubscriptionsToggle}
+                  style={{ cursor: 'pointer' }}
+                />
+                <label 
+                  className="form-check-label" 
+                  htmlFor="subscriptionsFilter"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <i className="bi bi-person-check me-1"></i>
+                  Только подписки
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {(selectedCategory || subscriptionsOnly) && (
+            <div className="mt-2">
+              <small className="text-muted">
+                Активные фильтры: 
+                {selectedCategory && <span className="badge bg-secondary ms-2">
+                  {categories.find(c => c.id === selectedCategory)?.name}
+                </span>}
+                {subscriptionsOnly && <span className="badge bg-info ms-2">Подписки</span>}
+              </small>
+            </div>
+          )}
+        </div>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
@@ -116,7 +167,11 @@ function PostsPage({ user }) {
       ) : (
         <>
           {posts.length === 0 ? (
-            <div className="alert alert-info">Постов пока нет</div>
+            <div className="alert alert-info">
+              {subscriptionsOnly 
+                ? 'Нет постов от пользователей, на которых вы подписаны' 
+                : 'Постов пока нет'}
+            </div>
           ) : (
             <div className="row">
               {posts.map(post => (
@@ -148,7 +203,6 @@ function PostsPage({ user }) {
             </div>
           )}
 
-          {/* Улучшенная пагинация - теперь всегда видна */}
           <nav className="mt-4">
             <div className="row align-items-center mb-3">
               <div className="col-md-4">
