@@ -1,10 +1,23 @@
 
+## **Сайт для ведения блога**
+Выполнялся как курсовая работа по интернет программированию. Тема - "Платформа для ведения блога. Подписки и лента."
+## **Стэк:**
+> Frontend: React, bootstrap, сборка на vite  
+> Backend: Java Spring, БД на H2.
 
+Для запуска потребуется (Я не уверен, но вроде бы): 
+в папке front запустить frontend часть приложения: 
+```
+npm install
+npm start
+```
+В корне проекта запустить: 
+```
+./gradlew bootRun
+```
+После этого обе части запустятся на разных портах.
 
 
 Swagger UI URL:
 http://localhost:8080/swagger-ui/index.html
-
-MVN Repository:
-https://mvnrepository.com/
 
